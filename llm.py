@@ -12,10 +12,6 @@ def create_model(model, base_url, api_key='EMPTY', temperature=None, max_tokens=
 
 
 if __name__ == '__main__':
-    import os
-    os.environ['http_proxy'] = ''
-    os.environ['https_proxy'] = ''
-
     llm = create_model(
         # model='Qwen2.5-72B-Instruct',
         # base_url='http://10.252.36.118:18000/v1'
