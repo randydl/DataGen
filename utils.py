@@ -4,6 +4,17 @@ from pathlib import Path
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 
 
+def extract_summary(text):
+    pattern = r'> \*\*📑 Summarization：\*\* \*(?P<summary>.+?)\*\n\n---\n\n(?P<content>.+)'
+    match = re.search(pattern, text, re.DOTALL)
+    if match:
+        return (
+            match.group('summary').strip(),
+            match.group('content').strip()
+        )
+    return None, text.strip()
+
+
 def extract_answer(text):
     text = text.strip()
     if '</think>' in text:
