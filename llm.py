@@ -7,19 +7,25 @@ from utils import split_text
 from prompts import PROMPT, REFINE_PROMPT
 
 
-def create_model(**kwargs):
-    return ChatOpenAI(
-        model=kwargs.get('model'),
-        api_key=kwargs.get('api_key', 'EMPTY'),
-        base_url=kwargs.get('base_url'),
-        max_tokens=kwargs.get('max_tokens'),
-        temperature=kwargs.get('temperature')
+def create_model(model, base_url, api_key='EMPTY', temperature=None, max_tokens=None):
+    return LLMChain(
+        model=model,
+        api_key=api_key,
+        base_url=base_url,
+        max_tokens=max_tokens,
+        temperature=temperature
     )
 
 
 class LLMChain:
     def __init__(self, **kwargs):
-        self.llm = create_model(**kwargs)
+        self.llm = ChatOpenAI(
+            model=kwargs.get('model'),
+            api_key=kwargs.get('api_key'),
+            base_url=kwargs.get('base_url'),
+            max_tokens=kwargs.get('max_tokens'),
+            temperature=kwargs.get('temperature')
+        )
 
         self.refine = load_summarize_chain(
             self.llm, chain_type='refine',
@@ -40,7 +46,7 @@ class LLMChain:
 
 
 if __name__ == '__main__':
-    llm = LLMChain(
+    llm = create_model(
         # model='Qwen2.5-72B-Instruct',
         # base_url='http://10.252.36.118:18000/v1'
         model='QwQ-32B',
@@ -49,8 +55,8 @@ if __name__ == '__main__':
 
     result = llm.invoke('DRAM的主要功能是什么？')
 
-    text = Path('example.md').read_text('utf-8')
-    texts = llm.split_text(text, chunk_size=5000)
-    result = llm.summarize(texts)
+    # text = Path('example.md').read_text('utf-8')
+    # texts = llm.split_text(text, chunk_size=5000)
+    # result = llm.summarize(texts)
 
     print(result)

@@ -1,7 +1,7 @@
 import re
 import json
 from pathlib import Path
-from langchain_text_splitters import RecursiveCharacterTextSplitter
+from langchain_text_splitters import MarkdownTextSplitter
 
 
 def extract_summary(text):
@@ -48,7 +48,7 @@ def split_text(text, chunk_size=5000, chunk_overlap=None):
     if chunk_overlap is None:
         chunk_overlap = chunk_size // 10
 
-    splitter = RecursiveCharacterTextSplitter(
+    splitter = MarkdownTextSplitter(
         chunk_size=chunk_size,
         chunk_overlap=chunk_overlap
     )
