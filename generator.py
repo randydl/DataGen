@@ -1,5 +1,6 @@
 import json
 from pathlib import Path
+from loguru import logger
 from tqdm.auto import tqdm
 from joblib import Parallel, delayed
 from tenacity import retry, stop_after_attempt
@@ -57,6 +58,25 @@ class QAGenerator:
         except Exception as e:
             return None
 
+    def split_chunks(self, input_dir, chunk_size=5000, overlap=None):
+        out_dir = self.out_dir.joinpath('chunks')
+        out_dir.mkdir(parents=True, exist_ok=True)
+        mdfiles = list(Path(input_dir).glob('*.md'))
+
+        counter = 0
+        for p in tqdm(mdfiles):
+            try:
+                text = p.read_text(encoding='utf-8')
+                chunks = self.llm.split_text(text, chunk_size, overlap)
+                for i, chunk in enumerate(chunks):
+                    path = out_dir.joinpath(f'{p.stem}-{i}.txt')
+                    path.write_text(chunk, encoding='utf-8')
+                counter += 1
+            except Exception as e:
+                logger.error(f'File: {p} - Info: {e}')
+
+        logger.success(f'Processed {counter}/{len(mdfiles)} files.')
+
     def build_questions(self, input_dir):
         def generator(text, chunk_id):
             try:
@@ -75,6 +95,8 @@ class QAGenerator:
             )
             results.extend(x for x in output if x)
             self.save_results(results, 'questions.json')
+
+        logger.success('Question generation completed!')
 
     def build_datasets(self, questions_file):
         with open(questions_file, 'r', encoding='utf-8') as f:
@@ -96,6 +118,8 @@ class QAGenerator:
             )
             results.extend(x for x in output if x)
             self.save_results(results, 'datasets.json')
+
+        logger.success('Dataset generation completed!')
 
     def save_results(self, results, file_name):
         with open(self.output_dir.joinpath(file_name), 'w', encoding='utf-8') as f:
