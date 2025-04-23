@@ -59,11 +59,11 @@ class QAGenerator:
             return None
 
     def split_chunks(self, input_dir, chunk_size=5000, overlap=None):
-        out_dir = self.out_dir.joinpath('chunks')
+        out_dir = self.output_dir.joinpath('chunks')
         out_dir.mkdir(parents=True, exist_ok=True)
-        mdfiles = list(Path(input_dir).glob('*.md'))
 
         counter = 0
+        mdfiles = list(Path(input_dir).glob('*.md'))
         for p in tqdm(mdfiles):
             try:
                 text = p.read_text(encoding='utf-8')
@@ -124,3 +124,8 @@ class QAGenerator:
     def save_results(self, results, file_name):
         with open(self.output_dir.joinpath(file_name), 'w', encoding='utf-8') as f:
             json.dump(results, f, ensure_ascii=False, indent=2)
+
+    def run(self, input_dir, chunk_size=5000, overlap=None):
+        self.split_chunks(input_dir, chunk_size, overlap)
+        self.build_questions(self.output_dir.joinpath('chunks'))
+        self.build_datasets(self.output_dir.joinpath('questions.json'))
