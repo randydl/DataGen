@@ -2,7 +2,7 @@ def get_question_prompt(text, number=None, length=500):
     if number is None:
         number = max(1, len(text) // length)
 
-    return f"""
+    return f"""\
 # 角色使命
 你是一位专业的文本分析专家，擅长从复杂文本中提取关键信息并生成可用于模型微调的结构化数据（仅生成问题）。
 
@@ -40,7 +40,7 @@ def get_question_prompt(text, number=None, length=500):
 
 
 def get_answer_prompt(text, question):
-    return f"""
+    return f"""\
 # Role: 微调数据集生成专家
 ## Profile:
 - Description: 你是一名微调数据集生成专家，擅长从给定的内容中生成准确的问题答案，确保答案的准确性和相关性。你要直接回答用户问题，所有信息已内化为你的专业知识。
@@ -74,7 +74,7 @@ def get_answer_prompt(text, question):
 
 
 def get_cot_prompt(question, answer, think):
-    return f"""
+    return f"""\
 # Role: 思维链优化专家
 ## Profile:
 - Description: 你是一位擅长优化思维链的专家，能够对给定的思维链进行处理，去除其中的参考引用相关话术，使其呈现为一个正常的推理过程。
@@ -108,7 +108,7 @@ def get_cot_prompt(question, answer, think):
 """
 
 
-PROMPT = '''\
+SUMMARY_BASE = '''\
 你是一位技术文档分析助手，擅长从专业文章中提取结构化知识。
 
 请阅读以下技术性文章片段，并总结其主要内容。
@@ -126,7 +126,7 @@ PROMPT = '''\
 '''
 
 
-REFINE_PROMPT = '''\
+SUMMARY_REFINE = '''\
 你是一位技术文档分析助手，擅长从专业文章中提取结构化知识。
 
 你正在对一篇技术性文章进行逐步总结，目前已有的总结如下：
@@ -146,4 +146,17 @@ REFINE_PROMPT = '''\
 - 请直接给出总结内容，避免使用“总结如下”等冗余措辞
 
 请输出更新后的整合总结：
+'''
+
+
+def get_refine_prompt(text):
+    return f'''\
+请根据以下要求优化文本内容：
+1. 删除所有与半导体技术无关的部分，仅保留涉及半导体材料、工艺、器件、设计、制造、测试等方面的知识性内容。
+2. 在删除无关内容后，继续优化剩余文本的语言表达，要求准确、清晰、专业，符合正式技术文档的风格。
+3. 对于保留的文本，不得随意增删改。若发现明显技术性错误，可在确保准确性的前提下适当修正。
+4. 仅输出最终优化后的文本内容（如果内容为空，则直接输出""），无需任何解释。
+
+待处理文本如下：
+{text}
 '''

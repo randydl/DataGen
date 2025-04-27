@@ -5,7 +5,7 @@ from tqdm.auto import tqdm
 from joblib import Parallel, delayed
 from tenacity import retry, stop_after_attempt
 from utils import extract_answer, extract_think, extract_json
-from prompts import get_question_prompt, get_answer_prompt, get_cot_prompt
+from prompts import get_question_prompt, get_answer_prompt, get_cot_prompt, get_refine_prompt
 
 
 MAX_RETRIES = 3
@@ -13,10 +13,19 @@ MAX_WORKERS = 64
 
 
 class QAGenerator:
-    def __init__(self, llm, output_dir):
+    def __init__(self, llm, output_dir, refine=False):
         self.llm = llm
+        self.refine = refine
         self.output_dir = Path(output_dir)
         self.output_dir.mkdir(parents=True, exist_ok=True)
+
+    @retry(stop=stop_after_attempt(MAX_RETRIES))
+    def refine_text(self, text):
+        prompt = get_refine_prompt(text)
+        result = self.llm.invoke(prompt).content
+        result = extract_answer(result)
+        assert result, 'Failed to refine text'
+        return result
 
     @retry(stop=stop_after_attempt(MAX_RETRIES))
     def generate_questions(self, text):
@@ -61,9 +70,8 @@ class QAGenerator:
     def split_chunks(self, input_dir, chunk_size=5000, overlap=None):
         out_dir = self.output_dir.joinpath('chunks')
         out_dir.mkdir(parents=True, exist_ok=True)
-
-        counter = 0
         mdfiles = list(Path(input_dir).glob('*.md'))
+
         for p in tqdm(mdfiles):
             try:
                 text = p.read_text(encoding='utf-8')
@@ -71,15 +79,16 @@ class QAGenerator:
                 for i, chunk in enumerate(chunks):
                     path = out_dir.joinpath(f'{p.stem}-{i}.txt')
                     path.write_text(chunk, encoding='utf-8')
-                counter += 1
             except Exception as e:
                 logger.error(f'File: {p} - Info: {e}')
 
-        logger.success(f'Processed {counter}/{len(mdfiles)} files.')
+        logger.success('Chunk splitting completed!')
 
     def build_questions(self, input_dir):
         def generator(text, chunk_id):
             try:
+                if self.refine:
+                    text = self.refine_text(text)
                 questions = self.generate_questions(text)
                 return {'id': chunk_id, 'text': text, 'questions': questions}
             except Exception as e:

@@ -4,7 +4,7 @@ from langchain_core.documents import Document
 from langchain_core.prompts import PromptTemplate
 from langchain.chains.summarize import load_summarize_chain
 from utils import split_text
-from prompts import PROMPT, REFINE_PROMPT
+from prompts import SUMMARY_BASE, SUMMARY_REFINE
 
 
 def create_model(model, base_url, api_key='EMPTY', temperature=None, max_tokens=None):
@@ -29,8 +29,8 @@ class LLMChain:
 
         self.refine = load_summarize_chain(
             self.llm, chain_type='refine',
-            question_prompt=PromptTemplate.from_template(PROMPT),
-            refine_prompt=PromptTemplate.from_template(REFINE_PROMPT)
+            question_prompt=PromptTemplate.from_template(SUMMARY_BASE),
+            refine_prompt=PromptTemplate.from_template(SUMMARY_REFINE)
         )
 
     def invoke(self, *args, **kwargs):
