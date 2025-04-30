@@ -7,26 +7,20 @@ from utils import split_text
 from prompts import SUMMARY_BASE, SUMMARY_REFINE
 
 
-def create_model(model, base_url, api_key='EMPTY', temperature=None, max_tokens=None):
+def create_model(model, base_url, api_key='EMPTY', temperature=None, max_tokens=None, **kwargs):
     return LLMChain(
         model=model,
         api_key=api_key,
         base_url=base_url,
         max_tokens=max_tokens,
-        temperature=temperature
+        temperature=temperature,
+        **kwargs
     )
 
 
 class LLMChain:
     def __init__(self, **kwargs):
-        self.llm = ChatOpenAI(
-            model=kwargs.get('model'),
-            api_key=kwargs.get('api_key'),
-            base_url=kwargs.get('base_url'),
-            max_tokens=kwargs.get('max_tokens'),
-            temperature=kwargs.get('temperature')
-        )
-
+        self.llm = ChatOpenAI(**kwargs)
         self.refine = load_summarize_chain(
             self.llm, chain_type='refine',
             question_prompt=PromptTemplate.from_template(SUMMARY_BASE),
